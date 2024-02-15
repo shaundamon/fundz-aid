@@ -2,38 +2,47 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 
-const Login = () => {
+
+const Login = ({ onLogin }) => {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    // eslint-disable-next-line
     const [error, setError] = useState(null); // State variable to handle error messages
-  
+
     const handleSubmit = (e) => {
-      e.preventDefault();
-      setError(null); // Reset error state on new submission
-  
-      fetch('http://localhost:8000/api/login/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username: email, password }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.status === 'Logged in successfully') {
-            const token = data.token;
-            localStorage.setItem('token', token);
-            navigate('/campaigns');
-          } else {
-            setError('Invalid credentials'); // Set error state if login fails
-          }
+        e.preventDefault();
+        setError(null); // Reset error state on new submission
+
+        fetch('http://localhost:8000/api/login/', { // Update the URL
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username: email, password }), // Use 'username' key
         })
-        .catch((error) => {
-          console.error('An error occurred during login:', error);
-          setError('An unexpected error occurred'); // Set error state if request fails
-        });
+            .then((response) => {
+                if (response.ok) {
+                    return response.json(); // Only call response.json() if response is OK
+                } else {
+                    throw new Error('Failed to log in');
+                }
+            })
+            .then((data) => {
+                console.log(data); // Debugging line
+                if (data.status === 'Logged in successfully') {
+                    onLogin();
+                    navigate('/campaigns');
+                } else {
+                    setError('Invalid credentials');
+                }
+            })
+            .catch((error) => {
+                console.error('An error occurred during login:', error);
+                setError('An unexpected error occurred'); // Set error state if request fails
+            });
     };
+
 
     return (
         <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
